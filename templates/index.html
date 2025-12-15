@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Corporate RAG Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .input-section, .output-section {
+            flex: 1;
+        }
+        textarea, input {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .answer {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        h1 {
+            color: #333;
+        }
+        h3 {
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>📄 Corporate Knowledge Assistant</h1>
+    
+    <div class="container">
+        <div class="input-section">
+            <h3>Document URL</h3>
+            <input 
+                type="text" 
+                id="docUrl" 
+                placeholder="https://example.com/policy.pdf"
+            >
+            
+            <h3>Questions (one per line)</h3>
+            <textarea 
+                id="questions" 
+                rows="5" 
+                placeholder="What is the deductible?&#10;How do I file a claim?"
+            ></textarea>
+            
+            <button onclick="submitQuery()">Get Answers</button>
+        </div>
+        
+        <div class="output-section">
+            <h3>Answers</h3>
+            <div id="answers"></div>
+        </div>
+    </div>
+    
+    <script>
+        async function submitQuery() {
+            // Get input values
+            const url = document.getElementById('docUrl').value;
+            const questions = document.getElementById('questions').value
+                .split('\n')
+                .filter(q => q.trim());
+            
+            // Validate inputs
+            if (!url) {
+                alert('Please enter a document URL');
+                return;
+            }
+            if (questions.length === 0) {
+                alert('Please enter at least one question');
+                return;
+            }
+            
+            // Show loading state
+            const answersDiv = document.getElementById('answers');
+            answersDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                // Make API call
+                const response = await fetch('http://localhost:8000/Benchmark/run', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer demo-token',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        documents: url,
+                        questions: questions
+                    })
+                });
+                
+                // Handle response
+                const data = await response.json();
+                answersDiv.innerHTML = '';
+                
+                data.answers.forEach((answer, i) => {
+                    const div = document.createElement('div');
+                    div.className = 'answer';
+                    div.innerHTML = `<strong>Q${i+1}:</strong> ${answer}`;
+                    answersDiv.appendChild(div);
+                });
+            } catch (error) {
+                answersDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
